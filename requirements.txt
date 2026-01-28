@@ -3,4 +3,3 @@ pymongo
 mongoengine
 dnspython
 gunicorn
-ServerSelectionTimeoutError
