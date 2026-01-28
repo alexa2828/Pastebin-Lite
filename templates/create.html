@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% if error_message %}
+<div id="errorModal" class="modal-overlay">
+  <div class="modal-box">
+    <h3>Error</h3>
+    <p>{{ error_message }}</p>
+    <button onclick="closeModal()">OK</button>
+  </div>
+</div>
+{% endif %}
+
+
+<h2>Create a Paste</h2>
+
+<textarea id="content" placeholder="Enter your text here..."></textarea>
+
+<div class="options">
+  <label>
+    TTL (seconds):
+    <input type="number" id="ttl">
+  </label>
+
+  <label>
+    Max views:
+    <input type="number" id="maxViews">
+  </label>
+</div>
+
+<button onclick="createPaste()">Create Paste</button>
+
+<div id="result"></div>
+
+
+<script src="/static/app.js"></script>
+
+<script>
+    function closeModal() {
+        const modal = document.getElementById("errorModal");
+        if (modal) {
+            modal.style.display = "none";
+            window.history.back(); // optional: go back
+        }
+    }
+</script>
+
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/view.css">
+{% endblock %}
+
+{% block content %}
+
+{% if error_message %}
+<div class="toast toast-error">
+  {{ error_message }}
+</div>
+{% endif %}
+
+
+<h2>Paste Details</h2>
+
+<table class="paste-table">
+  <tr>
+    <th>Paste ID</th>
+    <td>{{ paste_id }}</td>
+  </tr>
+
+  <tr>
+    <th>Content</th>
+    <td>
+      <pre class="paste-content">{{ content }}</pre>
+    </td>
+  </tr>
+
+  <tr>
+    <th>Expires At</th>
+    <td>
+      {{ expires_at if expires_at else "Never" }}
+    </td>
+  </tr>
+
+  <tr>
+    <th>Remaining Views</th>
+    <td>
+      {{ remaining_views if remaining_views is not none else "Unlimited" }}
+    </td>
+  </tr>
+</table>
+
+{% endblock %}
+
+<script>
+  setTimeout(() => {
+    const toast = document.querySelector(".toast");
+    if (toast) toast.style.display = "none";
+  }, 3000);
+</script>

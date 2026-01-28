@@ -1,0 +1,51 @@
+.paste-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+.paste-table th,
+.paste-table td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  vertical-align: top;
+}
+
+.paste-table th {
+  width: 180px;
+  background: #f0f0f0;
+  text-align: left;
+}
+
+.paste-content {
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+.toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 14px 20px;
+  border-radius: 8px;
+  color: white;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  animation: fadeIn 0.4s ease;
+  z-index: 999;
+}
+
+.toast-error {
+  background-color: #e74c3c;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
