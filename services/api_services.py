@@ -17,7 +17,7 @@ def healthz():
     try:
         client = request.environ.get('mongoengine.connection')
         return jsonify(status="ok"), 200
-    except erverSelectionTimeoutError:
+    except Exception as e:
         return jsonify({"ok": False}), 500
 
 def now_ms():

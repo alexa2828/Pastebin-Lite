@@ -1,5 +1,6 @@
 flask
 pymongo
+mongoengine
 dnspython
 gunicorn
 ServerSelectionTimeoutError
