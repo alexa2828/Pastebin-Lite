@@ -15,7 +15,7 @@ if not all([username, password, database_name]):
 encoded_password = quote_plus(password)
 
 MONGO_URI = (
-    f"mongodb+srv://{username}:{password}"
+    f"mongodb+srv://{username}:{encoded_password}" 
     f"@cluster0.hcdteph.mongodb.net/{database_name}"
     "?tls=true"
     "&retryWrites=false"
@@ -24,7 +24,7 @@ MONGO_URI = (
 
 connect(
     host=MONGO_URI,
-    connect=False,              # REQUIRED for Vercel
+    connect=False,
     serverSelectionTimeoutMS=5000,
     uuidRepresentation="standard"
 )
