@@ -1,16 +1,24 @@
-from flask import Blueprint, jsonify, request, abort, render_template
+from flask import Flask, jsonify, request, Blueprint, abort, render_template
+from pymongo.errors import ServerSelectionTimeoutError
 import time
 from datetime import datetime, timedelta, timezone
 import os
 import secrets
+from pymongo.collection import ReturnDocument
+from models.pastes import pastes 
+from mongoengine.errors import NotUniqueError
+
+
 
 api_bp = Blueprint('api_services', __name__, url_prefix='/api/api_services')
 
-
-def get_db():
-    from flask import current_app
-    return current_app.config["DB"]
-
+@api_bp.route('/api/healthz', methods=['GET'])
+def healthz():
+    try:
+        client = request.environ.get('mongoengine.connection')
+        return jsonify(status="ok"), 200
+    except Exception as e:
+        return jsonify({"ok": False}), 500
 
 def now_ms():
     if os.getenv("TEST_MODE") == "1":
@@ -24,16 +32,11 @@ def generate_id():
     return secrets.token_urlsafe(6)
 
 
-@api_bp.route('/api/healthz', methods=['GET'])
-def healthz():
-    try:
-        # Try a simple operation to check DB connectivity
-        get_db().list_collection_names()
-        return jsonify(status="ok"), 200
-    except Exception:
-        return jsonify({"ok": False}), 500
+def is_expired(paste, now):
+    expires_at = paste.get("expires_at")
+    return expires_at is not None and now >= expires_at
 
-
+    
 @api_bp.route("/pastes", methods=["POST"])
 def create_paste():
     data = request.get_json(silent=True)
@@ -44,27 +47,31 @@ def create_paste():
     if not isinstance(content, str) or not content.strip():
         return jsonify({"error": "content is required"}), 400
 
-    ttl_seconds = int(data.get("ttl", 3600))
-    max_views = int(data.get("max_views", 1))
+    ttl_seconds = int(data.get("ttl"))
+    max_views = int(data.get("max_views"))
+
+    if ttl_seconds is not None and (not isinstance(ttl_seconds, int) or ttl_seconds < 1):
+        return jsonify({"error": "ttl_seconds must be >= 1"}), 400
+
+    if max_views is not None and (not isinstance(max_views, int) or max_views < 1):
+        return jsonify({"error": "max_views must be >= 1"}), 400
 
     now = datetime.utcnow()
     expires_at = now + timedelta(seconds=ttl_seconds)
+
     paste_id = generate_id()
 
-    paste_doc = {
-        "paste_id": paste_id,
-        "content": content,
-        "created_at": now,
-        "expires_at": expires_at,
-        "max_views": max_views,
-        "views": 0
-    }
-
-    db = get_db()
     try:
-        db.pastes.insert_one(paste_doc)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        pastes(
+            paste_id=paste_id,
+            content=content,
+            created_at=now,
+            expires_at=expires_at,
+            max_views=max_views,
+            views=0
+        ).save()
+    except NotUniqueError:
+        return jsonify({"error": "Paste ID collision"}), 409
 
     base_url = request.host_url.rstrip("/")
     return jsonify({
@@ -76,32 +83,31 @@ def create_paste():
 @api_bp.route("/pastes/<paste_id>", methods=["GET"])
 def fetch_paste(paste_id):
     now = datetime.utcnow()
-    db = get_db()
-    paste = db.pastes.find_one({"paste_id": paste_id})
 
+    paste = pastes.objects(paste_id=paste_id).first()
     if not paste:
         abort(404)
 
-    if paste.get("expires_at") and paste["expires_at"] <= now:
+    if paste.expires_at and paste.expires_at <= now:
         abort(404)
 
-    if paste.get("max_views") is not None and paste["views"] >= paste["max_views"]:
+    if paste.max_views is not None and paste.views >= paste.max_views:
         abort(404)
 
-    db.pastes.update_one({"_id": paste["_id"]}, {"$inc": {"views": 1}})
-    paste = db.pastes.find_one({"_id": paste["_id"]})
+    pastes.objects(id=paste.id).update_one(inc__views=1)
+    paste.reload()
 
     remaining = None
-    if paste.get("max_views") is not None:
-        remaining = max(paste["max_views"] - paste["views"], 0)
+    if paste.max_views is not None:
+        remaining = max(paste.max_views - paste.views, 0)
 
     expires_at = (
-        paste["expires_at"].replace(tzinfo=timezone.utc).isoformat()
-        if paste.get("expires_at") else None
+        paste.expires_at.replace(tzinfo=timezone.utc).isoformat()
+        if paste.expires_at else None
     )
 
     return jsonify({
-        "content": paste["content"],
+        "content": paste.content,
         "remaining_views": remaining,
         "expires_at": expires_at
     }), 200
@@ -110,8 +116,8 @@ def fetch_paste(paste_id):
 @api_bp.route("/view_paste/<paste_id>", methods=["GET"])
 def view_paste(paste_id):
     now = datetime.utcnow()
-    db = get_db()
-    paste = db.pastes.find_one({"paste_id": paste_id})
+
+    paste = pastes.objects(paste_id=paste_id).first()
 
     if not paste:
         return render_template(
@@ -119,26 +125,29 @@ def view_paste(paste_id):
             error_message="Paste not found or has been deleted."
         ), 404
 
-    if paste.get("expires_at") and paste["expires_at"] <= now:
+    if paste.expires_at and paste.expires_at <= now:
         return render_template(
             "create.html",
             error_message="This paste has expired."
         ), 404
 
-    if paste.get("max_views") is not None and paste["views"] >= paste["max_views"]:
+    if paste.max_views is not None and paste.views >= paste.max_views:
         return render_template(
             "create.html",
             error_message="This paste has reached its view limit."
         ), 404
 
-    db.pastes.update_one({"_id": paste["_id"]}, {"$inc": {"views": 1}})
-    paste = db.pastes.find_one({"_id": paste["_id"]})
+    pastes.objects(id=paste.id).update_one(inc__views=1)
+    paste.reload()
 
     remaining_views = None
-    if paste.get("max_views") is not None:
-        remaining_views = max(paste["max_views"] - paste["views"], 0)
+    if paste.max_views is not None:
+        remaining_views = max(paste.max_views - paste.views, 0)
 
-    expires_at = paste["expires_at"].strftime("%d %b %Y, %I:%M %p") if paste.get("expires_at") else "Never"
+    if paste.expires_at and paste.expires_at != "Never":
+        expires_at = paste.expires_at.strftime("%d %b %Y, %I:%M %p")
+    else:
+        expires_at = "Never"
 
     return render_template(
         "view.html",

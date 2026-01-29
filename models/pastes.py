@@ -1,19 +1,14 @@
-# models.py
-from datetime import datetime, timedelta
+from mongoengine import Document, StringField, IntField, DateTimeField
 
-# Instead of a class, we can define a helper function to create paste documents
-def create_paste_document(paste_id, content, ttl_seconds=3600, max_views=1):
-    """
-    Returns a dictionary representing a paste document for insertion into MongoDB
-    """
-    now = datetime.utcnow()
-    expires_at = now + timedelta(seconds=ttl_seconds) if ttl_seconds else None
+class pastes(Document):
+    paste_id = StringField(required=True)
+    content = StringField(required=True)
+    created_at = DateTimeField(required=True)
+    expires_at = DateTimeField()
+    max_views = IntField()
+    views = IntField(default=0) 
 
-    return {
-        "paste_id": paste_id,
-        "content": content,
-        "created_at": now,
-        "expires_at": expires_at,
-        "max_views": max_views,
-        "views": 0
+    meta = {
+        "auto_create_index": False,
+        "collection": "pastes"
     }
