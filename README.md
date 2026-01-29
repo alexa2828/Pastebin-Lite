@@ -7,7 +7,7 @@ Pastebin-Lite is a minimalist web application that allows users to create text p
 The application supports optional constraints, including time-based expiry (TTL) and view-count limits, ensuring pastes become unavailable once a constraint is met.
 ---
 
-## 🚀 Features
+## Features
 
 - Create a text paste
 - Generate a shareable URL
@@ -19,7 +19,7 @@ The application supports optional constraints, including time-based expiry (TTL)
 - 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 - **Backend**: Python and Flask
 - **Frontend**: NHTML, CSS and Javascript
@@ -28,11 +28,36 @@ The application supports optional constraints, including time-based expiry (TTL)
 
 ---
 
-## 📦 API Endpoints
-
-### Health Check
-
-🚀 Deployed URL
+##Deployed URL
 
 Render: https://pastebin-lite-dz0w.onrender.com
-Vercel: 
+Vercel: https://pastebin-lite-task-rust.vercel.app/
+
+
+###How to run the project locally
+1. Clone the Repository
+  Clone the project from GitHub and navigate into the project directory.
+
+  $git clone https://github.com/alexa2828/Pastebin-Lite.git
+  $cd Pastebin-Lite
+
+2. Create a Virtual Environment (Windows)
+  $python -m venv venv
+  $venv\Scripts\activate
+
+  Create a Virtual Environment (Linux / macOS)
+  $python -m venv venv
+  $source venv/bin/activate
+ 
+** After activation, you should see (venv) in your terminal.**
+
+3. Install Project Dependencies
+  $pip install -r requirements.txt
+
+4. Run the Flask Application
+  $python app.py
+
+5. Access the Application in Browser
+  http://127.0.0.1:5000/
+
+

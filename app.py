@@ -1,16 +1,19 @@
 from flask import Flask, jsonify, render_template, request
-import mongoengine
-import os 
 from pymongo.errors import ServerSelectionTimeoutError 
 from services.api_services import api_bp
-
+from env import username, password, database_name
 app = Flask(__name__)
+from mongoengine import connect
+from urllib.parse import quote_plus
 
-mongoengine.connect(
-    db='mydatabase',
-    host='localhost',
-    port=27017
+encoded_password = quote_plus(password)
+
+MONGO_URI = (
+    f"mongodb+srv://{username}:{encoded_password}"
+    f"@cluster0.hcdteph.mongodb.net/{database_name}"
+    "?retryWrites=true&w=majority"
 )
+connect(host=MONGO_URI)
 
 @app.route('/')
 def index():
