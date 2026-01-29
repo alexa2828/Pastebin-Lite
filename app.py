@@ -1,13 +1,16 @@
 from flask import Flask, jsonify, render_template, request
 from services.api_services import api_bp
-app = Flask(__name__)
 from mongoengine import connect
 import os
 from urllib.parse import quote_plus
+from dotenv import load_dotenv
 
-username = os.environ.get("MONGO_USERNAME")
-password = os.environ.get("MONGO_PASSWORD")
-database_name = os.environ.get("MONGO_DB_NAME")
+# Load the .env file
+load_dotenv()
+
+username = os.getenv("MONGO_USERNAME")
+password = os.getenv("MONGO_PASSWORD")
+database_name = os.getenv("MONGO_DB_NAME")
 
 if not all([username, password, database_name]):
     raise RuntimeError("Missing MongoDB environment variables")
@@ -28,6 +31,7 @@ connect(
     serverSelectionTimeoutMS=5000,
     uuidRepresentation="standard"
 )
+app = Flask(__name__, static_url_path='/static', static_folder='static')
 
 @app.route('/')
 def index():
