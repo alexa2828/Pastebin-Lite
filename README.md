@@ -16,13 +16,12 @@ The application supports optional constraints, including time-based expiry (TTL)
   - Time-to-live (TTL)
   - Maximum number of views
 - Automatic expiry when constraints are reached
-- 
 ---
 
 ## Tech Stack
 
 - **Backend**: Python and Flask
-- **Frontend**: NHTML, CSS and Javascript
+- **Frontend**: HTML, CSS and Javascript
 - **database**: MongoDB
 - **Deployment**: Vercel or Render
 
@@ -30,8 +29,8 @@ The application supports optional constraints, including time-based expiry (TTL)
 
 ##Deployed URL
 
-Render: https://pastebin-lite-dz0w.onrender.com
-Vercel: https://pastebin-lite-task-rust.vercel.app/
+Render: https://pastebin-lite-dz0w.onrender.com (It takes time to create a link)
+Vercel: https://pastebin-lite-task-rust.vercel.app/ (It takes time to create a link)
 
 
 ###How to run the project locally

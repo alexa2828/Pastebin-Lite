@@ -1,5 +1,0 @@
-services:
-  - type: web
-    name: your-service-name
-    env: python
-    pythonVersion: "3.11"  # <-- make sure this is 3.10+ or 3.11
