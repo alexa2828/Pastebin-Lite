@@ -2,42 +2,43 @@ async function createPaste() {
   const content = document.getElementById("content").value;
   const ttl = document.getElementById("ttl").value;
   const maxViews = document.getElementById("maxViews").value;
-  const result = document.getElementById("result");
+  const resultDiv = document.getElementById("result");
 
-  result.textContent = "Creating...";
-
-  const payload = {
-    content: content,
-    ttl_seconds: ttl ? Number(ttl) : null,
-    max_views: maxViews ? Number(maxViews) : null
-  };
+  if (!content.trim()) {
+    resultDiv.innerHTML = "<p style='color:red'>Paste content cannot be empty.</p>";
+    resultDiv.hidden = false;
+    return;
+  }
 
   try {
-    const res = await fetch("/api/api_services/pastes", {
+    const response = await fetch("/api/api_services/pastes", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        content: content,
+        ttl: ttl || null,
+        max_views: maxViews || null
+      })
     });
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      result.textContent = data.error || "Error creating paste";
-      return;
+    if (!response.ok) {
+      throw new Error("Failed to create paste");
     }
 
-    result.innerHTML = `
-      <p>Paste created!</p>
-      <a href="${data.url}" target="_blank">${data.url}</a>
+    const data = await response.json();
+
+    const pasteUrl = data.url || `/paste/${data.id}`;
+
+    resultDiv.innerHTML = `
+      <p><strong>Paste created successfully!</strong></p>
+      <a href="${pasteUrl}" target="_blank">${pasteUrl}</a>
     `;
+    resultDiv.hidden = false;
+
   } catch (err) {
-    result.textContent = "Network error";
+    resultDiv.innerHTML = `<p style="color:red">${err.message}</p>`;
+    resultDiv.hidden = false;
   }
-  function closeModal() {
-  const modal = document.getElementById("errorModal");
-  if (modal) {
-    modal.style.display = "none";
-    window.history.back(); // optional: go back
-  }
-}
 }

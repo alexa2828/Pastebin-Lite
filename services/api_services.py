@@ -21,7 +21,6 @@ def healthz():
         return jsonify({"ok": False}), 500
 
 def now_ms():
-    """Deterministic time for testing."""
     if os.getenv("TEST_MODE") == "1":
         header = request.headers.get("x-test-now-ms")
         if header:
@@ -48,8 +47,8 @@ def create_paste():
     if not isinstance(content, str) or not content.strip():
         return jsonify({"error": "content is required"}), 400
 
-    ttl_seconds = data.get("ttl_seconds")
-    max_views = data.get("max_views")
+    ttl_seconds = int(data.get("ttl"))
+    max_views = int(data.get("max_views"))
 
     if ttl_seconds is not None and (not isinstance(ttl_seconds, int) or ttl_seconds < 1):
         return jsonify({"error": "ttl_seconds must be >= 1"}), 400
@@ -58,7 +57,7 @@ def create_paste():
         return jsonify({"error": "max_views must be >= 1"}), 400
 
     now = datetime.utcnow()
-    expires_at = now + timedelta(seconds=ttl_seconds) if ttl_seconds else None
+    expires_at = now + timedelta(seconds=ttl_seconds)
 
     paste_id = generate_id()
 
@@ -89,15 +88,12 @@ def fetch_paste(paste_id):
     if not paste:
         abort(404)
 
-    # time expiration
     if paste.expires_at and paste.expires_at <= now:
         abort(404)
 
-    # view expiration
     if paste.max_views is not None and paste.views >= paste.max_views:
         abort(404)
 
-    # atomic view increment
     pastes.objects(id=paste.id).update_one(inc__views=1)
     paste.reload()
 
@@ -123,7 +119,6 @@ def view_paste(paste_id):
 
     paste = pastes.objects(paste_id=paste_id).first()
 
-        # print("Paste found:", paste is not None)
     if not paste:
         return render_template(
             "create.html",
@@ -142,18 +137,17 @@ def view_paste(paste_id):
             error_message="This paste has reached its view limit."
         ), 404
 
-    # atomic view increment
     pastes.objects(id=paste.id).update_one(inc__views=1)
     paste.reload()
-    # print("Updated views:", paste)
 
     remaining_views = None
     if paste.max_views is not None:
         remaining_views = max(paste.max_views - paste.views, 0)
 
-    expires_at = None
-    if paste.expires_at:
-        expires_at = paste.expires_at.replace(tzinfo=timezone.utc).isoformat()
+    if paste.expires_at and paste.expires_at != "Never":
+        expires_at = paste.expires_at.strftime("%d %b %Y, %I:%M %p")
+    else:
+        expires_at = "Never"
 
     return render_template(
         "view.html",

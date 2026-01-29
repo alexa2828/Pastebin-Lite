@@ -13,8 +13,6 @@ mongoengine.connect(
 )
 
 @app.route('/')
-# def home():
-#     return jsonify(message="Welcome to the Flask-MongoEngine App!")
 def index():
     return render_template("create.html")
 
