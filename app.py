@@ -1,11 +1,12 @@
 from flask import Flask, jsonify, render_template, request
 from services.api_services import api_bp
-app = Flask(__name__)
-from mongoengine import connect
+from pymongo import MongoClient
 import os
 from urllib.parse import quote_plus
 
+app = Flask(__name__)
 
+# ---------------- MongoDB connection ----------------
 username = os.environ.get("MONGO_USERNAME")
 password = os.environ.get("MONGO_PASSWORD")
 database_name = os.environ.get("MONGO_DB_NAME")
@@ -22,12 +23,15 @@ MONGO_URI = (
     "&tls=true"
 )
 
-connect(
-    host=MONGO_URI,
-    serverSelectionTimeoutMS=5000,
-    connect=False,
-    uuidRepresentation="standard"
-)
+# Create a single global client
+mongo_client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+db = mongo_client[database_name]
+
+# Attach the client to Flask app for easy access in views
+app.config["MONGO_CLIENT"] = mongo_client
+app.config["DB"] = db
+
+# ----------------------------------------------------
 
 @app.route('/')
 def index():
@@ -44,4 +48,4 @@ def not_found(e):
 app.register_blueprint(api_bp)
 
 if __name__ == '__main__':
-    app.run(debug=True) 
+    app.run(debug=True)
