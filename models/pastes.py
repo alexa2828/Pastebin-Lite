@@ -7,3 +7,8 @@ class pastes(Document):
     expires_at = DateTimeField()
     max_views = IntField()
     views = IntField(default=0) 
+
+    meta = {
+        "auto_create_index": False,
+        "collection": "pastes"
+    }
