@@ -1,10 +1,16 @@
 from flask import Flask, jsonify, render_template, request
-from pymongo.errors import ServerSelectionTimeoutError 
 from services.api_services import api_bp
-from env import username, password, database_name
 app = Flask(__name__)
 from mongoengine import connect
+import os
 from urllib.parse import quote_plus
+
+username = os.environ.get("MONGO_USERNAME")
+password = os.environ.get("MONGO_PASSWORD")
+database_name = os.environ.get("MONGO_DB_NAME")
+
+if not all([username, password, database_name]):
+    raise RuntimeError("Missing MongoDB environment variables")
 
 encoded_password = quote_plus(password)
 
@@ -13,7 +19,10 @@ MONGO_URI = (
     f"@cluster0.hcdteph.mongodb.net/{database_name}"
     "?retryWrites=true&w=majority"
 )
-connect(host=MONGO_URI)
+connect(
+    host=MONGO_URI,
+    serverSelectionTimeoutMS=5000
+    )
 
 @app.route('/')
 def index():
