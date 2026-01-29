@@ -16,17 +16,16 @@ if not all([username, password, database_name]):
 encoded_password = quote_plus(password)
 
 MONGO_URI = (
-    f"mongodb+srv://{username}:{encoded_password}" 
+    f"mongodb+srv://{username}:{encoded_password}"
     f"@cluster0.hcdteph.mongodb.net/{database_name}"
-    "?tls=true"
-    "&retryWrites=false"
-    "&directConnection=false"
+    "?retryWrites=true"
+    "&tls=true"
 )
 
 connect(
     host=MONGO_URI,
-    connect=False,
     serverSelectionTimeoutMS=5000,
+    connect=False,
     uuidRepresentation="standard"
 )
 
