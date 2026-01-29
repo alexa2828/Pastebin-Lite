@@ -15,14 +15,19 @@ if not all([username, password, database_name]):
 encoded_password = quote_plus(password)
 
 MONGO_URI = (
-    f"mongodb+srv://{username}:{encoded_password}"
+    f"mongodb+srv://{username}:{password}"
     f"@cluster0.hcdteph.mongodb.net/{database_name}"
-    "?retryWrites=true&w=majority"
+    "?tls=true"
+    "&retryWrites=false"
+    "&directConnection=false"
 )
+
 connect(
     host=MONGO_URI,
-    serverSelectionTimeoutMS=5000
-    )
+    connect=False,              # REQUIRED for Vercel
+    serverSelectionTimeoutMS=5000,
+    uuidRepresentation="standard"
+)
 
 @app.route('/')
 def index():
